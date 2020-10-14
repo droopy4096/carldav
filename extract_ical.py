@@ -1,6 +1,5 @@
 #!/bin/env python
 
-# import libxml2
 from xml.etree.ElementTree import ElementTree
 import xml.etree.ElementTree as ET
 
@@ -8,7 +7,6 @@ import sys
 import json
 import os.path
 import os
-# import icalendar
 import argparse
 
 def env(var_name):
@@ -19,7 +17,6 @@ def env(var_name):
 
 def parse_calendar(calendar_name,calendar_xml,args):
     mydoc = ET.fromstring(calendar_xml)
-    # calendar_name=calendar_filename.split('/')[-1].split('.')[0]
     try:
         os.makedirs(os.path.join(args.ical_dir,calendar_name))
     except FileExistsError:
@@ -27,7 +24,6 @@ def parse_calendar(calendar_name,calendar_xml,args):
     calendars=[]
     for r in mydoc.findall('./d:response', 
                     namespaces={'d':'DAV:', 'cal':'urn:ietf:params:xml:ns:caldav'}):
-        # print(r)
         hrefs=[]
         for href in r.findall('./d:href',
                         namespaces={'d':'DAV:', 'cal':'urn:ietf:params:xml:ns:caldav'}):
@@ -39,29 +35,19 @@ def parse_calendar(calendar_name,calendar_xml,args):
                         continue
                     crlf_text=cal.text.replace("\n","\r\n")
                     cal_data.append(cal.text)
-        # print("==> {0}\n{1}".format(','.join(hrefs), json.dumps(cal_data, indent=2)))
         ical_filename=hrefs[0].split('/')[-1]
         if not ical_filename:
             continue
         print("processing: {}".format(ical_filename))
-        # calendar_entry=icalendar.Calendar.from_ical("\n".join(cal_data))
         if args.individual:
             with open(os.path.join(args.ical_dir,calendar_name,ical_filename),'w') as ical_file:
                 ical_file.write("\r\n".join(cal_data))
-                # ical_file.write("\n".join(cal_data))
-                # ical_file.write(calendar_entry.to_ical())
-        ## # vevent=calendar_entry.property_items('VEVENT')
-        ## vevent=calendar_entry.walk('VEVENT')
-        ## calendars.add_component(vevent)
-        ## # calendars.add('VEVENT',vevent)
         calendars.append(cal_data)
     if args.full:
         print("writing full ical")
         with open(os.path.join(args.ical_dir,calendar_name+'.ics'), 'w') as full_calendar:
             for cal_entry in calendars:
-                # full_calendar.write(cal_entry.to_ical())
                 full_calendar.write("\r\n".join(cal_entry))
-                # full_calendar.write("\n".join(cal_entry))
 
 if __name__ == "__main__":
     env_vars=['CALDAV_URI','CALDAV_USER','CALDAV_PASSWORD','CALDAV_CALENDARS']
@@ -122,59 +108,3 @@ if __name__ == "__main__":
         calendar_name=calendar_filename.split('/')[-1].split('.')[0]
         with open(calendar_filename,'r') as f:
             parse_calendar(calendar_name,f.read(),args)
-
-
-
-    # Terminate here
-    sys.exit(0)
-
-
-    calendar_filename=args.filename
-    # doc = libxml2.parseFile(calendar_filename)
-    mydoc = ElementTree(file=calendar_filename)
-    calendar_name=calendar_filename.split('/')[-1].split('.')[0]
-    try:
-        os.makedirs(os.path.join(args.ical_dir,calendar_name))
-    except FileExistsError:
-        pass
-    calendars=[]
-    for r in mydoc.findall('./d:response', 
-                    namespaces={'d':'DAV:', 'cal':'urn:ietf:params:xml:ns:caldav'}):
-        # print(r)
-        hrefs=[]
-        for href in r.findall('./d:href',
-                        namespaces={'d':'DAV:', 'cal':'urn:ietf:params:xml:ns:caldav'}):
-                    hrefs.append(href.text)
-        cal_data=[]
-        for cal in r.findall('*//cal:calendar-data',
-                        namespaces={'d':'DAV:', 'cal':'urn:ietf:params:xml:ns:caldav'}):
-                    if not cal.text:
-                        continue
-                    crlf_text=cal.text.replace("\n","\r\n")
-                    cal_data.append(cal.text)
-        # print("==> {0}\n{1}".format(','.join(hrefs), json.dumps(cal_data, indent=2)))
-        ical_filename=hrefs[0].split('/')[-1]
-        if not ical_filename:
-            continue
-        print("processing: {}".format(ical_filename))
-        # calendar_entry=icalendar.Calendar.from_ical("\n".join(cal_data))
-        if args.individual:
-            with open(os.path.join(args.ical_dir,calendar_name,ical_filename),'w') as ical_file:
-                ical_file.write("\r\n".join(cal_data))
-                # ical_file.write("\n".join(cal_data))
-                # ical_file.write(calendar_entry.to_ical())
-        ## # vevent=calendar_entry.property_items('VEVENT')
-        ## vevent=calendar_entry.walk('VEVENT')
-        ## calendars.add_component(vevent)
-        ## # calendars.add('VEVENT',vevent)
-        calendars.append(cal_data)
-    if args.full:
-        print("writing full ical")
-        with open(os.path.join(args.ical_dir,calendar_name+'.ics'), 'w') as full_calendar:
-            for cal_entry in calendars:
-                # full_calendar.write(cal_entry.to_ical())
-                full_calendar.write("\r\n".join(cal_entry))
-                # full_calendar.write("\n".join(cal_entry))
-
-        
-
